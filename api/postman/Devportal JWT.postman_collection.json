@@ -1,0 +1,218 @@
+{
+	"info": {
+		"_postman_id": "0e007e1e-ea93-472c-ad78-40c37bebd3ec",
+		"name": "Devportal JWT",
+		"description": "# _Environment variables_\n\n{{devportal}} = Devportal instance site (_**devportal**_ variable in the postman collection).\n\n{{siteId}} = One registrar site that is available in the Devportal instance (_**siteId**_ variable in the postman collection).\n\n{{appId}} = An application registered in the Devportal instance that have an _**Auto Register Trusted Service**_ associated (_**appId**_ variable in the postman collection).\n\n# _OAuth for jwt endpoints_\n\nThe OAuth header needs to be included in the Authorization of the _**signjwt**_ and _**verifyjwt**_ endpoints with the following structure:\n\n> OAuth oauth_consumer_key=\"{{siteId}}\",oauth_signature_method=\"HMAC-SHA1\",oauth_signature=\"\",oauth_timestamp=\"1717600187\",oauth_nonce=\"{{siteId}}\",oauth_version=\"1.0\" \n  \n\nFor doing so go to the _**Autorization**_ section in the postman collection, there select Auth type _**\"OAuth 1.0\"**_. After that in the option Add auth data to select _**\"Request Headers\"**_, for signature method select _**\"HMAC-SHA1\"**_ and add the following properties:\n\n- **Consumer key =** The site id that you are using (could be set to the _**siteId**_ variable in the postman collection).\n    \n- **Consumer secret =** The site secret of the site that you are using (this could be obtained through _**Registrar**_ - could be set to the _**siteSecret**_ variable in the postman collection).\n    \n\nAfter configuring this values in the Authorization section of your postman collection this header should be generated automatically for these two endpoints.\n\n# _SignJwt body_\n\nFor consuming this endpoint the body payload that we send in the _**encodedJwt**_ property needs to be a jwt encoded body with the following attributes:\n\n> {  \n\"aud\": \"[www.example.com\"](http://www.example.com),  \n\"sub\": \"{{appId}}\",  \n\"[https://purl.imsglobal.org/spec/lti/claim/deployment_id\"](https://purl.imsglobal.org/spec/lti/claim/deployment_id): \"c3deee7-3849-4290-b6d0-c62a564f63de\",  \n\"iss\": \"Test JWT\",  \n\"exp\": 1906902587,  \n\"iat\": 1717600187,  \n\"jti\": \"Sample\"  \n} \n  \n\n- **aud =** Audience.\n    \n- **sub =** Subject (This is the same application Id that we use in the endpoint).\n    \n- **iss =** Issuer.\n    \n- **exp =** Expiration time.\n    \n- **iat =** Issued at.\n    \n- **jti =** JWT Id.\n    \n\nThis body needs to be JWT encoded, for this the best way is to go to [https://jwt.io/](https://jwt.io/) and paste the body in the _**payload (Data)**_ section then grab the _**encoded payload (withouth the header and the signature)**_ and pass it to the SignJWT endpoint body with the following structure:\n\n> {  \n\"encodedJwt\": \"eyJpc3MiOiJUZXN0IEpXVCIsImlhdCI6MTcxNzYwMDE4NywiZXhwIjoxOTA2OTAyNTg3LCJhdWQiOiJ3d3cuZXhhbXBsZS5jb20iLCJzdWIiOiIzODRmZDEyNC0zMGVlLTRhOGQtYWU5Zi1iYThjMWZlNjIzYjAiLCJqdGkiOiJTYW1wbGUiLCJodHRwczovL3B1cmwuaW1zZ2xvYmFsLm9yZy9zcGVjL2x0aS9jbGFpbS9kZXBsb3ltZW50X2lkIjoiYzNkZWVlNy0zODQ5LTQyOTAtYjZkMC1jNjJhNTY0ZjYzZGUifQ\",  \n\"algorithm\": \"RS256\"  \n} \n  \n\nAfter consuming the endpoint with this body it will return a response with the complete JWT format including the _**header**_ and the _**signature**_.\n\n# _**VerifyJWT body**_\n\nTo consume this endpoint we need the _**signed JWT**_ that we get from the _**signjwt**_ endpoint and all we need to do is pass it as the _**encodedJwt**_ property like this:\n\n> {  \n\"encodedJwt\": \"eyJraWQiOiJiYzNkZWVlNy0zODQ5LTQyOTAtYjZkMC1jNjJhNTY0ZjYzZGUiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJ3d3cuZXhhbXBsZS5jb20iLCJzdWIiOiIzODRmZDEyNC0zMGVlLTRhOGQtYWU5Zi1iYThjMWZlNjIzYjAiLCJodHRwczpcL1wvcHVybC5pbXNnbG9iYWwub3JnXC9zcGVjXC9sdGlcL2NsYWltXC9kZXBsb3ltZW50X2lkIjoiYzNkZWVlNy0zODQ5LTQyOTAtYjZkMC1jNjJhNTY0ZjYzZGUiLCJpc3MiOiJUZXN0IEpXVCIsImV4cCI6MTkwNjkwMjU4NywiaWF0IjoxNzE3NjAwMTg3LCJqdGkiOiJTYW1wbGUifQ.gL0rqSYt2wAvueYvzU6akRD7z41PS5nAICYbDkSZVCw9JozGK2YxTZg0RvMx61Hm59EU_WxftLejK3NoEiv7mN7AO0u6aKXdfm3ZiG3YhWKSDc4U41vK2ILPxBn_ZyOoOOYLk5Nr5g9zLng4vNCiPrtFzKx2mrYT1GJolTV2dCb01F-vetXGmgkDd8HHKDpLZLDpd0Uj5SL-pKzq4IAVw9Nv6xx6TQav7MADmQDnX3WJ_ESBuc0tqwXIrhTMdjAdk71i5jBkMPvbWAdEqsYH2xY4uBMQSIK4e4gcT7opyBO8g4Scdm0xB8eFTUGI3X8lmhBrf9tuMAxGdl0Ap7ontA\", \"algorithm\": \"RS256\"  \n} \n  \n\nPlease note that in both endpoints the _**algorithm**_ property is the same in this case _**RS256**_.\n\nAfter consuming the endpoint with this body it will return a response with the complete same response as the _**signjwt**_ endpoint which means that the sent JWT was validated correctly.\n\n# _**JwtToken endpoint**_\n\nFor consuming this endpoint the body payload needs to be in _**x-www-form-urlencoded**_ format and needs to have the following attributes:\n\n- **grant_type =** client_credentials.\n    \n- **client_assertion_type =** urn:ietf:params:oauth:client-assertion-type:jwt-bearer.\n    \n- **scope =** [https://purl.imsglobal.org/spec/lti-ags/scope/report](https://purl.imsglobal.org/spec/lti-ags/scope/report).\n    \n- **client_assertion =** The _**signed JWT**_ that we get from the _**signjwt**_ endpoint.\n    \n\nAfter consuming the endpoint with these parameter it will return an access_token valid for 1 hour.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19003341"
+	},
+	"item": [
+		{
+			"name": "/api/v1/gateway/oauth2/jwttoken",
+			"protocolProfileBehavior": {
+				"followRedirects": true
+			},
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"type": "text"
+						},
+						{
+							"key": "client_assertion_type",
+							"value": "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+							"type": "text"
+						},
+						{
+							"key": "scope",
+							"value": "https://purl.imsglobal.org/spec/lti-ags/scope/report",
+							"type": "text"
+						},
+						{
+							"key": "client_assertion",
+							"value": "eyJraWQiOiI1M2JmZGY2MS0zYTk0LTRmZjMtYjQwMS1jOTFlZGZiZjYwZTMiLCJhbGciOiJSUzUxMiJ9.eyJhdWQiOiJ3d3cuZXhhbXBsZS5jb20iLCJzdWIiOiIzODRmZDEyNC0zMGVlLTRhOGQtYWU5Zi1iYThjMWZlNjIzYjAiLCJodHRwczpcL1wvcHVybC5pbXNnbG9iYWwub3JnXC9zcGVjXC9sdGlcL2NsYWltXC9kZXBsb3ltZW50X2lkIjoiYzNkZWVlNy0zODQ5LTQyOTAtYjZkMC1jNjJhNTY0ZjYzZGUiLCJpc3MiOiJUZXN0IEpXVCIsImV4cCI6MTkwNjkwMjU4NywiaWF0IjoxNzE3NjAwMTg3LCJqdGkiOiJTYW1wbGUifQ.u-t_Nxf7fttH-F4vpmd2W_BNSOf4_20RtGqaxGWGC12KYqVSQmZsox4SDksd4iAvBOC9ewwByY57IZTGBQjjEUNSCm7Y-h7IZjzq2Sql6D4uqWaUb77wRSuqSsqZNK_CwMtdrHmCoLsqC2AObRMZe9FQxzt7S1aXqaJiJGuoMwxxrpPXJkKVqHv2nZnLIafs277YYCXg_TVzLEKTgpTdGiz5x_H-YUK-G_6Z84iG9jFtuCIhOXAmTb78Yda9d9rfSUbIj3o-qwq3guskeHkVx56ZbVcj4P_Uwtq3WTpx5UYSkPtw5VEu55aHe3_ZtzQLw35zwh1PyH1rBb9AK6XYMeRAkMfxGfdaQoOI0UuurKfP21f3PRGzMmWqHDoYZBW52VGWVb4Ivn6WOC8QPHmndxiak5KeUqz_5br9FDUxfBeqw7LlYJc65IKQV1dNceve0sjeNXv6YDMXNpNV94SSCkPe4OKQhJrJ_Quezo8BA7mpNgVAhCNZ8Vu14dXHBBDzC79X_HhM2Q7OD8uSjiZbIia82pJAueL8bpftCszOJWZMsblYl5TPF6XEA5SFXkfaSZ8n3mQf75YvlZXVMWkXrMei7mGzbn9Y5QN0rpYwKNz0TRj0GuIKj35hQtxD-qhf6ajz_tGX3dFNqEUouKjgKyXHxtlsTUmv2yD6-vR8UlQ",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{devportal}}/api/v1/gateway/oauth2/jwttoken",
+					"host": [
+						"{{devportal}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"gateway",
+						"oauth2",
+						"jwttoken"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/v1/management/sites/:siteId/applications/:appId/signjwt",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"encodedJwt\": \"eyJpc3MiOiJUZXN0IEpXVCIsImlhdCI6MTcxNzYwMDE4NywiZXhwIjoxOTA2OTAyNTg3LCJhdWQiOiJ3d3cuZXhhbXBsZS5jb20iLCJzdWIiOiIzODRmZDEyNC0zMGVlLTRhOGQtYWU5Zi1iYThjMWZlNjIzYjAiLCJqdGkiOiJTYW1wbGUiLCJodHRwczovL3B1cmwuaW1zZ2xvYmFsLm9yZy9zcGVjL2x0aS9jbGFpbS9kZXBsb3ltZW50X2lkIjoiYzNkZWVlNy0zODQ5LTQyOTAtYjZkMC1jNjJhNTY0ZjYzZGUifQ\",\n    \"algorithm\": \"RS256\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{devportal}}/api/v1/management/sites/{{siteId}}/applications/{{appId}}/signjwt",
+					"host": [
+						"{{devportal}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"management",
+						"sites",
+						"{{siteId}}",
+						"applications",
+						"{{appId}}",
+						"signjwt"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "/api/v1/management/sites/:siteId/verifyjwt",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"encodedJwt\": \"eyJraWQiOiJlZTgyMzdmZC1lOTc0LTQ4MzMtODA5Yi02MzM3ZGE0MmFjMGYiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiJ3d3cuZXhhbXBsZS5jb20iLCJzdWIiOiIzODRmZDEyNC0zMGVlLTRhOGQtYWU5Zi1iYThjMWZlNjIzYjAiLCJodHRwczpcL1wvcHVybC5pbXNnbG9iYWwub3JnXC9zcGVjXC9sdGlcL2NsYWltXC9kZXBsb3ltZW50X2lkIjoiYzNkZWVlNy0zODQ5LTQyOTAtYjZkMC1jNjJhNTY0ZjYzZGUiLCJpc3MiOiJUZXN0IEpXVCIsImV4cCI6MTkwNjkwMjU4NywiaWF0IjoxNzE3NjAwMTg3LCJqdGkiOiJTYW1wbGUifQ.dRevNtEf5c-6dd-Ss5AAveZMafSaUnuZgrfboEXopqOceJ8IohyNYTcbAPnXO7Yin9VIi0goMOJXNEklSa1CkrR0E52hUESaNvneJszGiw54ozOIvrF3dMI8yR5GAoFaJ1Bb5G3z13RklIpm7N6AtTDubmeOjpZ9aA9AtRR1vr6tuebiPPVvhJ5mH8yI7cIaWDIS9uOOVRGPLmr6HYhhs8QZ8BmNKg373ZtpuVBKOYHwLRgmIri8B6Lu4YXD25mP4D16mntBtOS1A6YW-Cphalefh1-r7a1wosLgooboku837Lvm17_dOzQLZuJC1prqO1z36aT3YI8u_AC7lmyyQg\",\n    \"algorithm\": \"RS256\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{devportal}}/api/v1/management/sites/{{siteId}}/verifyjwt",
+					"host": [
+						"{{devportal}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"management",
+						"sites",
+						"{{siteId}}",
+						"verifyjwt"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"auth": {
+		"type": "oauth1",
+		"oauth1": [
+			{
+				"key": "tokenSecret",
+				"value": "",
+				"type": "string"
+			},
+			{
+				"key": "consumerSecret",
+				"value": "{{siteSecret}}",
+				"type": "string"
+			},
+			{
+				"key": "consumerKey",
+				"value": "{{siteId}}",
+				"type": "string"
+			},
+			{
+				"key": "signatureMethod",
+				"value": "HMAC-SHA1",
+				"type": "string"
+			},
+			{
+				"key": "privateKey",
+				"value": "",
+				"type": "string"
+			},
+			{
+				"key": "token",
+				"value": "",
+				"type": "string"
+			},
+			{
+				"key": "addParamsToHeader",
+				"value": true,
+				"type": "boolean"
+			},
+			{
+				"key": "version",
+				"value": "1.0",
+				"type": "string"
+			},
+			{
+				"key": "addEmptyParamsToSign",
+				"value": false,
+				"type": "boolean"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "devportal",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "siteId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "appId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "siteSecret",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
